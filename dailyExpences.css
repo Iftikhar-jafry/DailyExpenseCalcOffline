@@ -1,0 +1,165 @@
+body
+{
+    background: url("https://photopedia.in/wp-content/uploads/2017/12/wide-angle.jpg");
+    background-repeat: no-repeat;
+    background-size: cover;
+}
+.container
+{
+    width: 80%;
+    margin: auto;
+    padding: 10px;
+    font-family: 'Times New Roman', Times, serif;
+    /* background: rgb(85, 100, 145); */
+    
+}
+.part1
+{
+    display: flex;
+    width: 97%;
+    justify-content: space-around;
+    padding: 10px;
+}
+.part1 div
+{
+    width: 45%;
+    margin: auto;
+}
+label
+{
+    font-size: 20px;
+    font-style: oblique;
+    font-weight: 700;
+    margin-bottom: 10px;
+    border-bottom: 2px solid yellow;
+}
+input
+{
+    width: 70%;
+    margin-top: 10px;
+    padding: 15px;
+    font-size: 15px;
+    font-weight: 700;
+    /* border: none; */
+    border: 1px dashed red;
+    outline: none;
+    background: rgba(25, 200, 253 , 0.3);
+    border-radius: 15px;
+}
+.part2
+{
+    width: 97%;
+    padding: 10px;
+    margin: auto;
+    display: flex;
+    justify-content:space-around;
+}
+.btnAdd
+{
+    width: 200px;
+    background: rgb(175, 187, 39);
+    border-radius: 15px;
+    border-top: 2px solid green;
+    border-bottom: 2px solid rgb(161, 201, 17);
+    border-right: 2px solid rgb(32, 17, 161);
+    border-left: 2px solid rgb(207, 66, 89);
+    padding: 10px;
+    font-size: 15px;
+    font-weight: 700;
+    font-style: oblique;
+    text-align: center;
+    cursor: pointer;
+}
+#total
+{
+    
+}
+#part3
+{
+    width: 97%;
+    margin: auto;
+}
+#part3 div
+{
+    margin-bottom: 10px;
+    padding: 10px;
+    width: 90%;
+    background-color: aqua;
+    background: rgba(53, 245, 245 , 0.3);
+    border-radius: 10px;
+    border: 1px dashed rgb(48, 121, 121);
+    margin-bottom: 15px;
+}
+#part3 div h1
+{
+    text-align: center;
+    font-size: 30px;
+    font-weight: 600;
+    font-style: oblique;
+    border-bottom: 3px solid burlywood;
+}
+ol
+{
+    width: 90%;
+}
+ol li
+{
+    padding: 5px;
+    width: 90%;
+    display: flex;
+    justify-content: space-between;
+}
+ol li span
+{
+    width: 47%;
+    font-size: 19px;
+    font-weight: 800;
+    border-left: 1px dashed red;
+    border-bottom: 1px solid red;
+}
+
+.drop
+{
+    height: 400px;
+    overflow-y: scroll;
+}
+#enterTotalAmout
+{
+    display: none;
+}
+#totalBtn
+{
+    width: 20%;
+    color: rgb(18, 233, 90);
+    background-color: rgba(1, 25, 46, 0.514);
+    border: none;
+    cursor:pointer;
+}
+#totalAmount
+{
+    width: 30%;
+    margin: 20px;
+}
+
+/* JAVASCRIPT create class and id */
+
+.amountInp
+{
+    width: 30%;
+}
+.amountBtn
+{
+    margin-left: 10px;
+    height: 50px;
+    margin-top: 10px;
+}
+
+
+/*for reset amount*/
+#secContainer
+{
+    width: 80%;
+    margin: auto;
+    padding: 10px;
+    font-family: 'Times New Roman', Times, serif;
+}

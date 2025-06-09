@@ -33,3 +33,18 @@ This is a simple offline web app built with HTML, CSS, and JavaScript to help yo
 <br>
 
 🚀 Perfect for those who want a simple and private way to manage money.
+
+# How to Set Your own password
+<ul>
+<li>Go to dailyExpense.js file</li>
+
+<li>Search reset function</li>
+
+<li>In reset function You will find <p>
+if(pass=="abPassword")
+</p></li>
+
+<li>Replace abPassword with Your password</li>
+
+<li>Works completely offline using the browser's local storage</li>
+</ul>

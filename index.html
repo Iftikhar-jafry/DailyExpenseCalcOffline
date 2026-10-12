@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#101827">
+  <title>Daily Expense Tracker</title>
+  <link rel="stylesheet" href="dailyExpences.css">
+</head>
+<body>
+  <section class="panel auth-panel" id="authPanel">
+    <p class="eyebrow">PRIVATE CLOUD TRACKER</p>
+    <h1>Daily Expense Tracker</h1>
+    <p class="muted auth-intro">Sign in to access your budget and synchronize expenses across your devices.</p>
+    <form id="authForm" class="auth-form">
+      <div><label for="authEmail">Email</label><input type="email" id="authEmail" autocomplete="email" required placeholder="you@example.com"></div>
+      <div><label for="authPassword">Password</label><input type="password" id="authPassword" autocomplete="current-password" minlength="6" required placeholder="At least 6 characters"></div>
+      <button class="button primary full" id="signInBtn" type="submit">Sign in</button>
+      <button class="button secondary full" id="signUpBtn" type="button">Create account</button>
+    </form>
+    <p class="small muted" id="authMessage" role="status">Your expenses are private to your signed-in account.</p>
+    <p class="error-text" id="configError" hidden></p>
+  </section>
+
+  <main class="app-shell" id="container" hidden>
+    <header class="topbar">
+      <div><p class="eyebrow">PERSONAL FINANCE</p><h1>Daily Expense Tracker</h1><p class="muted">A clear picture of your money, one day at a time.</p></div>
+      <div class="top-actions"><span class="small muted" id="signedInAs"></span><button class="button secondary" id="signOutBtn" type="button">Sign out</button></div>
+    </header>
+
+    <section class="budget-panel">
+      <div><p class="eyebrow">YOUR MONTHLY BUDGET</p><div class="budget-amount"><span id="totalMoney">0</span><small>PKR</small></div><p class="muted">Available balance <strong id="rem">0</strong> PKR</p></div>
+      <div><label for="totalAmount">Set / update total budget</label><div class="inline-form"><input type="number" id="totalAmount" min="0" step=".01" placeholder="e.g. 30000"><button class="button primary" id="totalBtn" type="button">Save budget</button></div><p class="small muted">Your changes are saved automatically to your account.</p></div>
+    </section>
+
+    <section class="summary-grid">
+      <article class="summary-card"><span class="summary-label">Spent today</span><strong id="todaySpent">0 PKR</strong><span class="summary-note" id="todayDateLabel">Today</span></article>
+      <article class="summary-card"><span class="summary-label">Daily allowance</span><strong id="perDay">0 PKR</strong><span class="summary-note">Based on remaining budget and days left</span></article>
+      <article class="summary-card"><span class="summary-label">Total spent</span><strong id="allSpent">0 PKR</strong><span class="summary-note">Across all saved dates</span></article>
+    </section>
+
+    <div class="workspace">
+      <div class="main-column">
+        <section class="panel">
+          <div class="section-heading"><div><p class="eyebrow">RECORD A PURCHASE</p><h2>Add an expense</h2></div><span class="date-chip" id="selectedDateLabel"></span></div>
+          <div class="date-row"><label for="expenseDate">Expense date</label><input type="date" id="expenseDate"></div>
+          <button class="button primary full" id="openItemForm" type="button">＋ Add item</button>
+          <form id="itemForm" class="item-form" hidden>
+            <div><label for="exName">Item name</label><input id="exName" maxlength="100" placeholder="e.g. Groceries" required></div>
+            <div><label for="Ex">Price (PKR)</label><input type="number" id="Ex" min=".01" step=".01" placeholder="e.g. 850" required></div>
+            <button class="button primary" type="submit">Add to list</button>
+          </form>
+          <div class="action-row"><button class="button secondary" id="total" type="button">Daily summary</button><button class="button secondary" id="printBtn" type="button">Print</button></div>
+          <p class="small muted" id="statusMessage" role="status">Sign in to load your cloud data.</p>
+        </section>
+        <section class="panel"><div class="section-heading"><div><p class="eyebrow">SPENDING HISTORY</p><h2>Expenses by date</h2></div><span class="small muted" id="dateCount">0 days</span></div><div id="part3" class="history-list"></div></section>
+      </div>
+
+      <aside class="panel side-panel">
+        <p class="eyebrow">ITEMS & PRICES</p><h2>Daily item list</h2><p class="small muted" id="rightDateLabel">Items for today</p><div id="rightItems" class="right-items"></div>
+        <div class="side-total"><span>Selected day total</span><strong id="selectedDayTotal">0 PKR</strong></div>
+        <hr>
+        <p class="eyebrow">MONTHLY EXPENSES</p><h2>Monthly item list</h2><p class="small muted">For expenses not assigned to a specific day, like haircut or clothing.</p>
+        <form id="monthlyForm" class="monthly-form"><div><label for="monthlyName">Expense name</label><input id="monthlyName" maxlength="100" placeholder="e.g. Haircut or pent shirt" required></div><div><label for="monthlyPrice">Price (PKR)</label><input type="number" id="monthlyPrice" min=".01" step=".01" placeholder="e.g. 1200" required></div><button class="button primary full" type="submit">Add monthly expense</button></form>
+        <div id="monthlyItems" class="right-items"></div><div class="side-total"><span>Monthly expenses total</span><strong id="monthlyTotal">0 PKR</strong></div>
+        <p class="small muted">Monthly expenses reduce your available balance and are included in total spent, but not in any daily total.</p>
+        <hr><button class="button danger full" id="reset" type="button">Reset budget & history</button><p class="small muted">This permanently clears your cloud data after confirmation.</p>
+      </aside>
+    </div>
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="supabase-config.js"></script>
+  <script src="dailyExpences.js"></script>
+</body>
+</html>

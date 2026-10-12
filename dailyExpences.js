@@ -1,220 +1,29 @@
-// getID is function which return document.getElementById()
-const btn=getID("addEx");
-var ol;
-const divTSubtrat=getID("rem");
-const totalMoneyEl = getID("totalMoney");
-const remEl = getID("rem");
-const exNameEl = getID("exName");
-const exValueEl = getID("Ex");
-const part3El = getID("part3");
-const perDayEl = getID("perDay");
-const passwordEl = getID("password");
-const totalMoneyInputEl = getID("TOTALMONEY");
-const containerEl = getID("container");
-const secContainerEl = getID("secContainer");
-
-
-var count=1;
-var total=0;
-var passCount=0;
-
-function setExpense()
-{
-    if(count===1)
-    {
-        var div1=ToCreateElement("div")
-        var head=ToCreateElement("h1");
-        ol=ToCreateElement('ol');
-        var date=new Date();       
-        head.innerHTML=date.toLocaleDateString('eng',{day:'numeric',weekday:'long',year:'numeric',month:'long'});    
-        // head.innerHTML="Sunday, April 28, 2024";
-        part3El.appendChild(div1);
-        div1.appendChild(head);
-        div1.appendChild(ol);
-        count=2;
-    }
-        total+=parseInt(exValueEl.value);
-        let li=ToCreateElement('li');
-        let span1=ToCreateElement('span');
-        span1.innerHTML=exNameEl.value;
-        let span2=ToCreateElement('span');
-        span2.innerHTML=exValueEl.value;
-        ol.appendChild(li);
-        li.appendChild(span1);
-        li.appendChild(span2);
-        exNameEl.value="";
-        exValueEl.value="";
-}
-
-function totalExpense()
-{
-    let divT=ToCreateElement("div");
-    divT.style.background="#fef";
-    const perDayValue = parseInt(perDayEl.innerHTML) || 0;
-    const goodBad = perDayValue - total;
-    const status = goodBad > 0 ? `<font color='green'>Good ${goodBad}</font>` :
-                  goodBad < 0 ? `<font color='red'>Bad ${goodBad}</font>` : "Ok";
-
-
-    divT.innerHTML=`Total Expense in a Day : ${total}. . . . . . Per Day is : ${perDayEl.innerHTML}. . . ${status}`;
-
-    part3El.appendChild(divT);
-    divTSubtrat.innerHTML=parseInt(ToGetStorage("remain"))-total;
-    ToSetStorage("remain",divTSubtrat.innerHTML);
-    rem.innerHTML=ToGetStorage("remain");
-    ToSetStorage("datas",part3El.innerHTML);
-    console.log(ToSetStorage("datas",part3El.innerHTML))
-    show()
-    count=1
-    total=0
-    perDay();
-}
-
-function perDay()
-{
-    let date=new Date();
-    let lastDate=new Date(date.getFullYear(),date.getMonth()+1,0).getDate();
-    let numberOfDays=lastDate-date.getDate();
-         
-    ToSetStorage("numDay",parseInt(numberOfDays));
-    perDayEl.innerHTML=parseInt(parseInt(ToGetStorage("remain"))/parseInt(ToGetStorage("numDay")));
-}
-
-function showTotalButton()
-{
-    ToShowElement("total");
-}
-
-
-function show()
-{
-    part3El.innerHTML=ToGetStorage("datas");
-    totalMoneyEl.innerHTML=ToGetStorage("TotalMoney")
-    remEl.innerHTML=ToGetStorage("remain");
-    ToHideElement("total")
-    perDayEl.innerHTML=parseInt(parseInt(ToGetStorage("remain"))/parseInt(ToGetStorage("numDay")));
-
-}
-show();
-
-function reset()
-{
-    let pass=passwordEl.value
-    if(pass=="Noor112%")
-    {
-        let t=totalMoneyInputEl.value
-        if(passCount>=2)
-        {
-            getID("passLabel").innerHTML="";
-            getID("TOTALMONEY").value="";
-            cancel();
-        }
-        else if(t=="")
-        {
-            getID("passLabel").innerHTML="";
-            getID("totalLabel").innerHTML="<font color='red'> !Please Enter valid Amount. Now You have chance </font>"
-            passwordEl.value=""
-            getID("TOTALMONEY").value=""
-            passCount++;
-        }
-        else
-        {
-            var TotalMoney=ToCreateElement("span");
-            TotalMoney.innerHTML=t;
-            ToSetStorage("TotalMoney",TotalMoney.innerHTML);
-
-            divTSubtrat.innerHTML=t
-            ToSetStorage("remain",divTSubtrat.innerHTML);
-
-            part3El.innerHTML=""
-            ToSetStorage("datas",part3El.innerHTML);
-            document.getElementById("passLabel").innerHTML="";
-            passwordEl.value=""
-            totalMoneyInputEl.value=""
-            show();
-            perDay();
-            cancel();
-        }
-    } 
-    else if(passCount<2)
-    {
-        passCount++
-        getID("passLabel").innerHTML="<font color='red'> !You Enter Wrong Password. Now You have "+(3-passCount)+" chance </font>";
-        getID("totalLabel").innerHTML=""
-        passwordEl.value=""
-        getID("TOTALMONEY").value=""
-    }
-    else
-    {
-        getID("passLabel").innerHTML="";
-        passwordEl.value=""
-        totalMoneyInputEl.value=""
-        cancel()
-    }
-}
-function change()
-{
-    ToHideElement("container")
-    ToShowElement("secContainer");
-}
-function cancel()
-{
-    passCount=0
-    ToHideElement("secContainer")
-    ToShowElement("container");
-}
-ToHideElement("secContainer")
-
-// function for print expenses
-function PrintElem()
-{
-    var mywindow = window.open('', 'PRINT', 'height=auto,width=600');
-
-    mywindow.document.write('<html><head><style>body{font-family: Times, serif; background: skyblue;background-repeat: no-repeat;background-size: cover;}');
-    mywindow.document.write('#part3{width: 97%;margin: auto;}#part3 div{margin-bottom: 10px;padding: 10px;width: 90%;background-color: aqua;background: rgba(53, 245, 245 , 0.3);border-radius: 10px;border: 1px dashed rgb(48, 121, 121);margin-bottom: 15px;}');
-    mywindow.document.write('#part3 div h1{text-align: center;font-size: 30px;font-weight: 600;font-style: oblique;border-bottom: 3px solid burlywood;}');
-    mywindow.document.write('ol{width: 90%;}ol li{padding: 5px;width: 90%;display: flex;justify-content: space-between;}');
-    mywindow.document.write('ol li span{width: 47%;font-size: 19px;font-weight: 800;border-left: 1px dashed red;border-bottom: 1px solid red;}</style>');
-    mywindow.document.write('<title> + "Monthy Expenses "  + </title>');
-    mywindow.document.write('</head><body >');
-    mywindow.document.write('<h1 style="color:red;">' + "Monthy Expenses"  + '</h1>');
-    mywindow.document.write(part3El.innerHTML);
-    mywindow.document.write('</body></html>');
-
-    mywindow.document.close(); // necessary for IE >= 10
-    mywindow.focus(); // necessary for IE >= 10*/
-
-    mywindow.print();
-    mywindow.close();
-
-    return true;
-}
-
-function ToShowElement(id)
-{
-    getID(id).style.display="block";
-}
-function ToHideElement(id)
-{
-    getID(id).style.display="none";
-}
-
-function ToSetStorage(name , id)
-{
-    localStorage.setItem(name,id);
-}
-
-function ToGetStorage(name)
-{
-    return localStorage.getItem(name);
-}
-
-function ToCreateElement(name)
-{
-    return document.createElement(name)
-}
-
-function getID(id)
-{
-    return document.getElementById(id);
-}
+// JSON is the persistent data source. Use Load JSON / Save JSON to select the file.
+const $=id=>document.getElementById(id);
+const money=n=>new Intl.NumberFormat("en-PK",{maximumFractionDigits:2}).format(Number(n)||0);
+const keyFor=(d=new Date())=>{d=new Date(d);return [d.getFullYear(),String(d.getMonth()+1).padStart(2,"0"),String(d.getDate()).padStart(2,"0")].join("-")};
+const pretty=k=>{const [y,m,d]=k.split("-").map(Number);return new Date(y,m-1,d).toLocaleDateString("en",{weekday:"long",day:"numeric",month:"long",year:"numeric"})};
+const today=keyFor();let data={_settings:{totalMoney:0}},draft=[],fileHandle=null,selected=today;
+function normalize(raw){if(!raw||typeof raw!=="object"||Array.isArray(raw))throw Error("JSON must contain an object");const clean={_settings:{totalMoney:Math.max(0,Number(raw._settings?.totalMoney??raw.totalMoney??0)||0)}};for(const [k,v] of Object.entries(raw)){if(k==="_settings"||k==="totalMoney"||!/^\d{4}-\d{2}-\d{2}$/.test(k)||!v||typeof v!=="object")continue;clean[k]={item:[],price:[]};(Array.isArray(v.item)?v.item:[]).forEach((n,i)=>{const p=Number(v.price?.[i]);if(String(n).trim()&&Number.isFinite(p)&&p>=0){clean[k].item.push(String(n).trim());clean[k].price.push(p)}})}return clean}
+function ensure(k){return data[k]||(data[k]={item:[],price:[]})}
+function dayTotal(k){return(data[k]?.price||[]).reduce((s,p)=>s+(Number(p)||0),0)}
+function keys(){return Object.keys(data).filter(k=>/^\d{4}-\d{2}-\d{2}$/.test(k))}
+function spent(){return keys().reduce((s,k)=>s+dayTotal(k),0)}
+function remaining(){return Number(data._settings.totalMoney||0)-spent()}
+function allowance(){const d=new Date(),left=new Date(d.getFullYear(),d.getMonth()+1,0).getDate()-d.getDate()+1;return remaining()/Math.max(1,left)}
+function status(msg,error=false){$("statusMessage").textContent=msg;$("statusMessage").style.color=error?"var(--red)":"var(--muted)"}
+function renderItems(){const box=$("rightItems");box.replaceChildren();const saved=data[selected]||{item:[],price:[]};const list=saved.item.map((name,i)=>({name,price:Number(saved.price[i])||0,saved:true})).concat(draft.map((x,i)=>({...x,index:i,saved:false})));$("rightDateLabel").textContent="Items for "+pretty(selected);if(!list.length){const p=document.createElement("p");p.className="empty-state";p.textContent="No items for this date yet. Choose Add item to begin.";box.append(p)}else list.forEach(x=>{const row=document.createElement("div");row.className="right-item";const name=document.createElement("span");name.className="right-item-name";name.textContent=x.name;const price=document.createElement("span");price.className="right-item-price";price.textContent=money(x.price)+" PKR";row.append(name,price);if(!x.saved){const b=document.createElement("button");b.className="remove-item";b.type="button";b.textContent="×";b.setAttribute("aria-label","Remove "+x.name);b.onclick=()=>{draft.splice(x.index,1);renderItems()};row.append(b)}box.append(row)});$("selectedDayTotal").textContent=money(dayTotal(selected)+draft.reduce((s,x)=>s+x.price,0))+" PKR";$("draftSummary").hidden=!draft.length;$("draftSummary").textContent=draft.length+" unsaved item(s) · "+money(draft.reduce((s,x)=>s+x.price,0))+" PKR"}
+function renderHistory(){const box=$("part3");box.replaceChildren();const all=keys().sort((a,b)=>b.localeCompare(a));$("dateCount").textContent=all.length+" day"+(all.length===1?"":"s");if(!all.length){const p=document.createElement("p");p.className="empty-state";p.textContent="Your saved daily expenses will appear here.";box.append(p);return}all.forEach(k=>{const card=document.createElement("article");card.className="history-day";const header=document.createElement("div");header.className="history-day-header";const date=document.createElement("span");date.textContent=pretty(k);const total=document.createElement("strong");total.textContent=money(dayTotal(k))+" PKR";header.append(date,total);card.append(header);const list=document.createElement("ul");list.className="expense-list";data[k].item.forEach((n,i)=>{const li=document.createElement("li");li.className="expense-row";const a=document.createElement("span"),b=document.createElement("span");a.textContent=n;b.textContent=money(data[k].price[i])+" PKR";li.append(a,b);list.append(li)});card.append(list);const result=document.createElement("div"),diff=allowance()-dayTotal(k);result.className="daily-result "+(diff>=0?"good":"bad");result.textContent="Total Expense in a Day: "+money(dayTotal(k))+" · Per Day is: "+money(allowance())+" · "+(diff>=0?"Good +":"Bad ")+money(diff);card.append(result);box.append(card)})}
+function render(){$("totalMoney").textContent=money(data._settings.totalMoney);$("rem").textContent=money(remaining());$("allSpent").textContent=money(spent())+" PKR";$("todaySpent").textContent=money(dayTotal(today))+" PKR";$("perDay").textContent=money(allowance())+" PKR";$("todayDateLabel").textContent=pretty(today);$("selectedDateLabel").textContent=pretty(selected);renderItems();renderHistory()}
+function addItem(e){e.preventDefault();const name=$("exName").value.trim(),price=Number($("Ex").value);if(!name)return status("Please enter an item name.",true);if(!Number.isFinite(price)||price<=0)return status("Enter a price greater than zero.",true);draft.push({name,price});$("exName").value="";$("Ex").value="";$("itemForm").hidden=true;renderItems();$("exName").focus();status("Item added to the right-side list. Save daily expenses to add it to history.")}
+function saveDay(){if(!draft.length)return status("Add at least one item before saving daily expenses.",true);const target=ensure(selected);draft.forEach(x=>{target.item.push(x.name);target.price.push(x.price)});draft=[];render();status("Expenses recorded for "+pretty(selected)+". Click Save JSON to persist them in your file.")}
+function saveBudget(){const v=$("totalAmount").value,n=Number(v);if(v.trim()===""||!Number.isFinite(n)||n<0)return status("Enter a valid budget amount.",true);data._settings.totalMoney=n;$("totalAmount").value="";render();status("Budget updated. Click Save JSON to keep the change.")}
+async function loadFile(f){try{data=normalize(JSON.parse(await f.text()));draft=[];render();status("Loaded "+f.name+". Save JSON after editing to keep changes.")}catch(e){status("Could not load JSON: "+e.message,true)}}
+async function loadJson(){if("showOpenFilePicker"in window){try{const [h]=await window.showOpenFilePicker({types:[{description:"Expense JSON",accept:{"application/json":[".json"]}}]});fileHandle=h;await loadFile(await h.getFile());return}catch(e){if(e.name==="AbortError")return}}$("jsonFileInput").click()}
+function downloadJson(){const url=URL.createObjectURL(new Blob([JSON.stringify(data,null,2)],{type:"application/json"}));const a=document.createElement("a");a.href=url;a.download="expense-data.json";a.click();URL.revokeObjectURL(url);status("JSON backup downloaded as expense-data.json.")}
+async function saveJson(){const json=JSON.stringify(data,null,2);if(fileHandle&&"createWritable"in fileHandle){try{const w=await fileHandle.createWritable();await w.write(json);await w.close();status("Saved changes to your selected JSON file.");return}catch(e){status("Could not overwrite selected file; downloading backup instead.",true)}}else if("showSaveFilePicker"in window){try{fileHandle=await window.showSaveFilePicker({suggestedName:"expense-data.json",types:[{description:"JSON file",accept:{"application/json":[".json"]}}]});const w=await fileHandle.createWritable();await w.write(json);await w.close();status("JSON saved. Next time, use Load JSON to reopen this file.");return}catch(e){if(e.name==="AbortError")return;status("File picker unavailable; downloading backup instead.",true)}}downloadJson()}
+function summary(){const total=dayTotal(selected)+draft.reduce((s,x)=>s+x.price,0),diff=allowance()-total;status("Total Expense in a Day: "+money(total)+" · Per Day is: "+money(allowance())+" · "+(diff>=0?"Good +":"Bad ")+money(diff))}
+function resetOpen(){$("container").hidden=true;$("secContainer").hidden=false;$("password").focus()}
+function resetCancel(){$("secContainer").hidden=true;$("container").hidden=false;$("password").value="";$("passLabel").textContent=""}
+function resetConfirm(){if($("password").value!=="Noor112%"){$("passLabel").textContent="Incorrect password.";return}data={_settings:{totalMoney:0}};draft=[];fileHandle=null;resetCancel();render();status("Tracker cleared in this session. Save JSON to store the empty data file.")}
+$("openItemForm").onclick=()=>{$("itemForm").hidden=!$("itemForm").hidden;if(!$("itemForm").hidden)$("exName").focus()};$("itemForm").addEventListener("submit",addItem);$("addEx").onclick=saveDay;$("total").onclick=summary;$("totalBtn").onclick=saveBudget;$("printBtn").onclick=()=>window.print();$("loadJsonBtn").onclick=loadJson;$("saveJsonBtn").onclick=saveJson;$("jsonFileInput").onchange=e=>{if(e.target.files[0]){fileHandle=null;loadFile(e.target.files[0]);e.target.value=""}};$("expenseDate").value=today;$("expenseDate").onchange=e=>{selected=e.target.value||today;draft=[];render()};$("reset").onclick=resetOpen;$("confirmReset").onclick=resetConfirm;$("cancelReset").onclick=resetCancel;render();

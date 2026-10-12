@@ -1,5 +1,9 @@
 {
   "_settings": {
     "totalMoney": 0
+  },
+  "_monthlyExpenses": {
+    "item": [],
+    "price": []
   }
 }

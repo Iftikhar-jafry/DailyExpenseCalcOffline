@@ -1,29 +1,471 @@
-// JSON is the persistent data source. Use Load JSON / Save JSON to select the file.
-const $=id=>document.getElementById(id);
-const money=n=>new Intl.NumberFormat("en-PK",{maximumFractionDigits:2}).format(Number(n)||0);
-const keyFor=(d=new Date())=>{d=new Date(d);return [d.getFullYear(),String(d.getMonth()+1).padStart(2,"0"),String(d.getDate()).padStart(2,"0")].join("-")};
-const pretty=k=>{const [y,m,d]=k.split("-").map(Number);return new Date(y,m-1,d).toLocaleDateString("en",{weekday:"long",day:"numeric",month:"long",year:"numeric"})};
-const today=keyFor();let data={_settings:{totalMoney:0}},draft=[],fileHandle=null,selected=today;
-function normalize(raw){if(!raw||typeof raw!=="object"||Array.isArray(raw))throw Error("JSON must contain an object");const clean={_settings:{totalMoney:Math.max(0,Number(raw._settings?.totalMoney??raw.totalMoney??0)||0)},_monthlyExpenses:{item:[],price:[]}};const monthly=raw._monthlyExpenses||{};(Array.isArray(monthly.item)?monthly.item:[]).forEach((n,i)=>{const p=Number(monthly.price?.[i]);if(String(n).trim()&&Number.isFinite(p)&&p>=0){clean._monthlyExpenses.item.push(String(n).trim());clean._monthlyExpenses.price.push(p)}});for(const [k,v] of Object.entries(raw)){if(k==="_settings"||k==="totalMoney"||!/^\d{4}-\d{2}-\d{2}$/.test(k)||!v||typeof v!=="object")continue;clean[k]={item:[],price:[]};(Array.isArray(v.item)?v.item:[]).forEach((n,i)=>{const p=Number(v.price?.[i]);if(String(n).trim()&&Number.isFinite(p)&&p>=0){clean[k].item.push(String(n).trim());clean[k].price.push(p)}})}return clean}
-const monthlyTotal=()=>((data._monthlyExpenses?.price)||[]).reduce((s,p)=>s+(Number(p)||0),0);\nfunction ensure(k){return data[k]||(data[k]={item:[],price:[]})}
-function dayTotal(k){return(data[k]?.price||[]).reduce((s,p)=>s+(Number(p)||0),0)}
-function keys(){return Object.keys(data).filter(k=>/^\d{4}-\d{2}-\d{2}$/.test(k))}
-function spent(){return keys().reduce((s,k)=>s+dayTotal(k),monthlyTotal())}
-function remaining(){return Number(data._settings.totalMoney||0)-spent()}
-function allowance(){const d=new Date(),left=new Date(d.getFullYear(),d.getMonth()+1,0).getDate()-d.getDate()+1;return remaining()/Math.max(1,left)}
-function status(msg,error=false){$("statusMessage").textContent=msg;$("statusMessage").style.color=error?"var(--red)":"var(--muted)"}
-function renderMonthlyItems(){const box=$("monthlyItems");box.replaceChildren();const m=data._monthlyExpenses||{item:[],price:[]};if(!m.item.length){const p=document.createElement("p");p.className="empty-state";p.textContent="No monthly expenses yet. Add things like haircut or clothing here.";box.append(p)}else m.item.forEach((name,i)=>{const row=document.createElement("div");row.className="right-item";const n=document.createElement("span");n.className="right-item-name";n.textContent=name;const price=document.createElement("span");price.className="right-item-price";price.textContent=money(m.price[i])+" PKR";const b=document.createElement("button");b.className="remove-item";b.type="button";b.textContent="×";b.setAttribute("aria-label","Remove monthly expense "+name);b.onclick=()=>{data._monthlyExpenses.item.splice(i,1);data._monthlyExpenses.price.splice(i,1);render();status("Monthly expense removed. Save JSON to keep this change.");};row.append(n,price,b);box.append(row)});$("monthlyTotal").textContent=money(monthlyTotal())+" PKR"}\nfunction addMonthlyExpense(e){e.preventDefault();const name=$("monthlyName").value.trim(),price=Number($("monthlyPrice").value);if(!name)return status("Please enter a monthly expense name.",true);if(!Number.isFinite(price)||price<=0)return status("Enter a monthly expense price greater than zero.",true);if(!data._monthlyExpenses)data._monthlyExpenses={item:[],price:[]};data._monthlyExpenses.item.push(name);data._monthlyExpenses.price.push(price);$("monthlyName").value="";$("monthlyPrice").value="";render();status("Monthly expense added. Saving JSON data file...");saveJson()}\nfunction renderItems(){const box=$("rightItems");box.replaceChildren();const saved=data[selected]||{item:[],price:[]};const list=saved.item.map((name,i)=>({name,price:Number(saved.price[i])||0,saved:true})).concat(draft.map((x,i)=>({...x,index:i,saved:false})));$("rightDateLabel").textContent="Items for "+pretty(selected);if(!list.length){const p=document.createElement("p");p.className="empty-state";p.textContent="No items for this date yet. Choose Add item to begin.";box.append(p)}else list.forEach(x=>{const row=document.createElement("div");row.className="right-item";const name=document.createElement("span");name.className="right-item-name";name.textContent=x.name;const price=document.createElement("span");price.className="right-item-price";price.textContent=money(x.price)+" PKR";row.append(name,price);if(!x.saved){const b=document.createElement("button");b.className="remove-item";b.type="button";b.textContent="×";b.setAttribute("aria-label","Remove "+x.name);b.onclick=()=>{draft.splice(x.index,1);renderItems()};row.append(b)}box.append(row)});$("selectedDayTotal").textContent=money(dayTotal(selected)+draft.reduce((s,x)=>s+x.price,0))+" PKR";$("draftSummary").hidden=!draft.length;$("draftSummary").textContent=draft.length+" unsaved item(s) · "+money(draft.reduce((s,x)=>s+x.price,0))+" PKR"}
-function renderHistory(){const box=$("part3");box.replaceChildren();const all=keys().sort((a,b)=>b.localeCompare(a));$("dateCount").textContent=all.length+" day"+(all.length===1?"":"s");if(!all.length){const p=document.createElement("p");p.className="empty-state";p.textContent="Your saved daily expenses will appear here.";box.append(p);return}all.forEach(k=>{const card=document.createElement("article");card.className="history-day";const header=document.createElement("div");header.className="history-day-header";const date=document.createElement("span");date.textContent=pretty(k);const total=document.createElement("strong");total.textContent=money(dayTotal(k))+" PKR";header.append(date,total);card.append(header);const list=document.createElement("ul");list.className="expense-list";data[k].item.forEach((n,i)=>{const li=document.createElement("li");li.className="expense-row";const a=document.createElement("span"),b=document.createElement("span");a.textContent=n;b.textContent=money(data[k].price[i])+" PKR";li.append(a,b);list.append(li)});card.append(list);const result=document.createElement("div"),diff=allowance()-dayTotal(k);result.className="daily-result "+(diff>=0?"good":"bad");result.textContent="Total Expense in a Day: "+money(dayTotal(k))+" · Per Day is: "+money(allowance())+" · "+(diff>=0?"Good +":"Bad ")+money(diff);card.append(result);box.append(card)})}
-function render(){$("totalMoney").textContent=money(data._settings.totalMoney);$("rem").textContent=money(remaining());$("allSpent").textContent=money(spent())+" PKR";$("todaySpent").textContent=money(dayTotal(today))+" PKR";$("perDay").textContent=money(allowance())+" PKR";$("todayDateLabel").textContent=pretty(today);$("selectedDateLabel").textContent=pretty(selected);renderItems();renderMonthlyItems();renderHistory()}
-function addItem(e){e.preventDefault();const name=$("exName").value.trim(),price=Number($("Ex").value);if(!name)return status("Please enter an item name.",true);if(!Number.isFinite(price)||price<=0)return status("Enter a price greater than zero.",true);draft.push({name,price});$("exName").value="";$("Ex").value="";$("itemForm").hidden=true;renderItems();$("exName").focus();status("Item added to the right-side list. Save daily expenses to add it to history.")}
-function saveDay(){if(!draft.length)return status("Add at least one item before saving daily expenses.",true);const target=ensure(selected);draft.forEach(x=>{target.item.push(x.name);target.price.push(x.price)});draft=[];render();status("Expenses recorded. Saving your JSON data file...");saveJson()}
-function saveBudget(){const v=$("totalAmount").value,n=Number(v);if(v.trim()===""||!Number.isFinite(n)||n<0)return status("Enter a valid budget amount.",true);data._settings.totalMoney=n;$("totalAmount").value="";render();status("Budget updated. Saving JSON data file...");saveJson()}
-async function loadFile(f){try{data=normalize(JSON.parse(await f.text()));draft=[];render();status("Loaded "+f.name+". Save JSON after editing to keep changes.")}catch(e){status("Could not load JSON: "+e.message,true)}}
-async function loadJson(){if("showOpenFilePicker"in window){try{const [h]=await window.showOpenFilePicker({types:[{description:"Expense JSON",accept:{"application/json":[".json"]}}]});fileHandle=h;await loadFile(await h.getFile());return}catch(e){if(e.name==="AbortError")return}}$("jsonFileInput").click()}
-function downloadJson(){const url=URL.createObjectURL(new Blob([JSON.stringify(data,null,2)],{type:"application/json"}));const a=document.createElement("a");a.href=url;a.download="expense-data.json";a.click();URL.revokeObjectURL(url);status("JSON backup downloaded as expense-data.json.")}
-async function saveJson(){const json=JSON.stringify(data,null,2);if(fileHandle&&"createWritable"in fileHandle){try{const w=await fileHandle.createWritable();await w.write(json);await w.close();status("Saved changes to your selected JSON file.");return}catch(e){status("Could not overwrite selected file; downloading backup instead.",true)}}else if("showSaveFilePicker"in window){try{fileHandle=await window.showSaveFilePicker({suggestedName:"expense-data.json",types:[{description:"JSON file",accept:{"application/json":[".json"]}}]});const w=await fileHandle.createWritable();await w.write(json);await w.close();status("JSON saved. Next time, use Load JSON to reopen this file.");return}catch(e){if(e.name==="AbortError")return;status("File picker unavailable; downloading backup instead.",true)}}downloadJson()}
-function summary(){const total=dayTotal(selected)+draft.reduce((s,x)=>s+x.price,0),diff=allowance()-total;status("Total Expense in a Day: "+money(total)+" · Per Day is: "+money(allowance())+" · "+(diff>=0?"Good +":"Bad ")+money(diff))}
-function resetOpen(){$("container").hidden=true;$("secContainer").hidden=false;$("password").focus()}
-function resetCancel(){$("secContainer").hidden=true;$("container").hidden=false;$("password").value="";$("passLabel").textContent=""}
-function resetConfirm(){if($("password").value!=="Noor112%"){$("passLabel").textContent="Incorrect password.";return}data={_settings:{totalMoney:0},_monthlyExpenses:{item:[],price:[]}};draft=[];fileHandle=null;resetCancel();render();status("Tracker cleared in this session. Save JSON to store the empty data file.")}
-$("openItemForm").onclick=()=>{$("itemForm").hidden=!$("itemForm").hidden;if(!$("itemForm").hidden)$("exName").focus()};$("itemForm").addEventListener("submit",addItem);$("monthlyForm").addEventListener("submit",addMonthlyExpense);$("addEx").onclick=saveDay;$("total").onclick=summary;$("totalBtn").onclick=saveBudget;$("printBtn").onclick=()=>window.print();$("loadJsonBtn").onclick=loadJson;$("saveJsonBtn").onclick=saveJson;$("jsonFileInput").onchange=e=>{if(e.target.files[0]){fileHandle=null;loadFile(e.target.files[0]);e.target.value=""}};$("expenseDate").value=today;$("expenseDate").onchange=e=>{selected=e.target.value||today;draft=[];render()};$("reset").onclick=resetOpen;$("confirmReset").onclick=resetConfirm;$("cancelReset").onclick=resetCancel;render();
+/* Daily Expense Tracker — Supabase-backed cloud persistence. */
+(() => {
+  "use strict";
+
+  const $ = (id) => document.getElementById(id);
+  const money = (value) => new Intl.NumberFormat("en-PK", { maximumFractionDigits: 2 }).format(Number(value) || 0);
+  const keyFor = (date = new Date()) => {
+    const d = new Date(date);
+    return [d.getFullYear(), String(d.getMonth() + 1).padStart(2, "0"), String(d.getDate()).padStart(2, "0")].join("-");
+  };
+  const pretty = (key) => {
+    const [year, month, day] = key.split("-").map(Number);
+    return new Date(year, month - 1, day).toLocaleDateString("en", {
+      weekday: "long", day: "numeric", month: "long", year: "numeric"
+    });
+  };
+  const today = keyFor();
+  const emptyData = () => ({
+    _settings: { totalMoney: 0 },
+    _monthlyExpenses: { item: [], price: [] }
+  });
+
+  let data = emptyData();
+  let selected = today;
+  let currentUser = null;
+  let loadedUserId = null;
+  let saveTimer = null;
+  let saveQueue = Promise.resolve();
+  let supabaseClient = null;
+
+  function normalize(raw) {
+    if (!raw || typeof raw !== "object" || Array.isArray(raw)) throw new Error("Saved expense data has an invalid format.");
+    const clean = {
+      _settings: { totalMoney: Math.max(0, Number(raw._settings?.totalMoney ?? raw.totalMoney ?? 0) || 0) },
+      _monthlyExpenses: { item: [], price: [] }
+    };
+    const monthly = raw._monthlyExpenses || {};
+    (Array.isArray(monthly.item) ? monthly.item : []).forEach((name, index) => {
+      const price = Number(monthly.price?.[index]);
+      if (String(name).trim() && Number.isFinite(price) && price >= 0) {
+        clean._monthlyExpenses.item.push(String(name).trim());
+        clean._monthlyExpenses.price.push(price);
+      }
+    });
+    for (const [key, value] of Object.entries(raw)) {
+      if (key === "_settings" || key === "_monthlyExpenses" || key === "totalMoney" ||
+          !/^\d{4}-\d{2}-\d{2}$/.test(key) || !value || typeof value !== "object") continue;
+      clean[key] = { item: [], price: [] };
+      (Array.isArray(value.item) ? value.item : []).forEach((name, index) => {
+        const price = Number(value.price?.[index]);
+        if (String(name).trim() && Number.isFinite(price) && price >= 0) {
+          clean[key].item.push(String(name).trim());
+          clean[key].price.push(price);
+        }
+      });
+    }
+    return clean;
+  }
+
+  function status(message, isError = false) {
+    const el = $("statusMessage");
+    if (!el) return;
+    el.textContent = message;
+    el.style.color = isError ? "var(--red)" : "var(--muted)";
+  }
+
+  function authMessage(message, isError = false) {
+    const el = $("authMessage");
+    el.textContent = message;
+    el.style.color = isError ? "var(--red)" : "var(--muted)";
+  }
+
+  function showAuth() {
+    $("authPanel").hidden = false;
+    $("container").hidden = true;
+    $("signedInAs").textContent = "";
+  }
+
+  function showApp() {
+    $("authPanel").hidden = true;
+    $("container").hidden = false;
+    $("signedInAs").textContent = currentUser?.email || "Signed in";
+  }
+
+  function monthlyTotal() {
+    return (data._monthlyExpenses?.price || []).reduce((sum, price) => sum + (Number(price) || 0), 0);
+  }
+  function ensureDay(key) {
+    if (!data[key]) data[key] = { item: [], price: [] };
+    return data[key];
+  }
+  function dayTotal(key) {
+    return (data[key]?.price || []).reduce((sum, price) => sum + (Number(price) || 0), 0);
+  }
+  function dateKeys() {
+    return Object.keys(data).filter((key) => /^\d{4}-\d{2}-\d{2}$/.test(key));
+  }
+  function spent() {
+    return dateKeys().reduce((sum, key) => sum + dayTotal(key), 0) + monthlyTotal();
+  }
+  function remaining() {
+    return Number(data._settings.totalMoney || 0) - spent();
+  }
+  function allowance() {
+    const now = new Date();
+    const daysLeft = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate() - now.getDate() + 1;
+    return remaining() / Math.max(1, daysLeft);
+  }
+
+  function scheduleSave() {
+    if (!currentUser) return;
+    clearTimeout(saveTimer);
+    status("Changes made — saving to your account…");
+    saveTimer = setTimeout(() => { persistNow(); }, 500);
+  }
+
+  async function persistNow() {
+    if (!currentUser || !supabaseClient) return false;
+    clearTimeout(saveTimer);
+    const userId = currentUser.id;
+    const snapshot = JSON.parse(JSON.stringify(data));
+    saveQueue = saveQueue.catch(() => {}).then(async () => {
+      const { error } = await supabaseClient
+        .from("expense_data")
+        .upsert({
+          user_id: userId,
+          data: snapshot,
+          updated_at: new Date().toISOString()
+        }, { onConflict: "user_id" });
+      if (error) throw error;
+    });
+    try {
+      await saveQueue;
+      if (currentUser?.id === userId) status("All changes saved to the cloud.");
+      return true;
+    } catch (error) {
+      if (currentUser?.id === userId) status("Cloud save failed: " + error.message + ". Check your connection and try again.", true);
+      return false;
+    }
+  }
+
+  async function loadCloudData(user) {
+    status("Loading your expenses from the cloud…");
+    try {
+      const { data: row, error } = await supabaseClient
+        .from("expense_data")
+        .select("data")
+        .eq("user_id", user.id)
+        .maybeSingle();
+      if (error) throw error;
+      if (currentUser?.id !== user.id) return;
+      data = row?.data ? normalize(row.data) : emptyData();
+      render();
+      if (!row) {
+        await persistNow();
+      } else {
+        status("Your cloud expenses are loaded.");
+      }
+    } catch (error) {
+      status("Could not load cloud data: " + error.message + ". Check the table and Row Level Security policy.", true);
+    }
+  }
+
+  async function handleSession(session) {
+    const nextUser = session?.user || null;
+    if (!nextUser) {
+      currentUser = null;
+      loadedUserId = null;
+      clearTimeout(saveTimer);
+      data = emptyData();
+      showAuth();
+      authMessage("Sign in to access your private expense data.");
+      return;
+    }
+    currentUser = nextUser;
+    showApp();
+    if (loadedUserId === nextUser.id) return;
+    loadedUserId = nextUser.id;
+    data = emptyData();
+    await loadCloudData(nextUser);
+  }
+
+  function renderMonthlyItems() {
+    const box = $("monthlyItems");
+    box.replaceChildren();
+    const monthly = data._monthlyExpenses || { item: [], price: [] };
+    if (!monthly.item.length) {
+      const empty = document.createElement("p");
+      empty.className = "empty-state";
+      empty.textContent = "No monthly expenses yet. Add things like haircut or clothing here.";
+      box.append(empty);
+    } else {
+      monthly.item.forEach((name, index) => {
+        const row = document.createElement("div");
+        row.className = "right-item";
+        const label = document.createElement("span");
+        label.className = "right-item-name";
+        label.textContent = name;
+        const price = document.createElement("span");
+        price.className = "right-item-price";
+        price.textContent = money(monthly.price[index]) + " PKR";
+        const remove = document.createElement("button");
+        remove.className = "remove-item";
+        remove.type = "button";
+        remove.textContent = "×";
+        remove.setAttribute("aria-label", "Remove monthly expense " + name);
+        remove.addEventListener("click", () => {
+          data._monthlyExpenses.item.splice(index, 1);
+          data._monthlyExpenses.price.splice(index, 1);
+          render();
+          scheduleSave();
+        });
+        row.append(label, price, remove);
+        box.append(row);
+      });
+    }
+    $("monthlyTotal").textContent = money(monthlyTotal()) + " PKR";
+  }
+
+  function removeDayExpense(key, index) {
+    const day = data[key];
+    if (!day) return;
+    day.item.splice(index, 1);
+    day.price.splice(index, 1);
+    render();
+    scheduleSave();
+  }
+
+  function renderItems() {
+    const box = $("rightItems");
+    box.replaceChildren();
+    const day = data[selected] || { item: [], price: [] };
+    $("rightDateLabel").textContent = "Items for " + pretty(selected);
+    if (!day.item.length) {
+      const empty = document.createElement("p");
+      empty.className = "empty-state";
+      empty.textContent = "No items for this date yet. Choose Add item to begin.";
+      box.append(empty);
+    } else {
+      day.item.forEach((name, index) => {
+        const row = document.createElement("div");
+        row.className = "right-item";
+        const label = document.createElement("span");
+        label.className = "right-item-name";
+        label.textContent = name;
+        const price = document.createElement("span");
+        price.className = "right-item-price";
+        price.textContent = money(day.price[index]) + " PKR";
+        const remove = document.createElement("button");
+        remove.className = "remove-item";
+        remove.type = "button";
+        remove.textContent = "×";
+        remove.setAttribute("aria-label", "Remove " + name);
+        remove.addEventListener("click", () => removeDayExpense(selected, index));
+        row.append(label, price, remove);
+        box.append(row);
+      });
+    }
+    $("selectedDayTotal").textContent = money(dayTotal(selected)) + " PKR";
+  }
+
+  function renderHistory() {
+    const box = $("part3");
+    box.replaceChildren();
+    const allDates = dateKeys().sort((a, b) => b.localeCompare(a));
+    $("dateCount").textContent = allDates.length + " day" + (allDates.length === 1 ? "" : "s");
+    if (!allDates.length) {
+      const empty = document.createElement("p");
+      empty.className = "empty-state";
+      empty.textContent = "Your saved daily expenses will appear here.";
+      box.append(empty);
+      return;
+    }
+    allDates.forEach((key) => {
+      const card = document.createElement("article");
+      card.className = "history-day";
+      const header = document.createElement("div");
+      header.className = "history-day-header";
+      const date = document.createElement("span");
+      date.textContent = pretty(key);
+      const total = document.createElement("strong");
+      total.textContent = money(dayTotal(key)) + " PKR";
+      header.append(date, total);
+      card.append(header);
+      const list = document.createElement("ul");
+      list.className = "expense-list";
+      data[key].item.forEach((name, index) => {
+        const item = document.createElement("li");
+        item.className = "expense-row";
+        const label = document.createElement("span");
+        label.textContent = name;
+        const value = document.createElement("span");
+        value.textContent = money(data[key].price[index]) + " PKR";
+        const remove = document.createElement("button");
+        remove.className = "remove-item";
+        remove.type = "button";
+        remove.textContent = "×";
+        remove.setAttribute("aria-label", "Remove " + name + " on " + key);
+        remove.addEventListener("click", () => removeDayExpense(key, index));
+        item.append(label, value, remove);
+        list.append(item);
+      });
+      card.append(list);
+      const result = document.createElement("div");
+      const difference = allowance() - dayTotal(key);
+      result.className = "daily-result " + (difference >= 0 ? "good" : "bad");
+      result.textContent = "Daily expense: " + money(dayTotal(key)) + " · Current daily allowance: " +
+        money(allowance()) + " · " + (difference >= 0 ? "Under allowance by " : "Over allowance by ") + money(Math.abs(difference));
+      card.append(result);
+      box.append(card);
+    });
+  }
+
+  function render() {
+    $("totalMoney").textContent = money(data._settings.totalMoney);
+    $("rem").textContent = money(remaining());
+    $("allSpent").textContent = money(spent()) + " PKR";
+    $("todaySpent").textContent = money(dayTotal(today)) + " PKR";
+    $("perDay").textContent = money(allowance()) + " PKR";
+    $("todayDateLabel").textContent = pretty(today);
+    $("selectedDateLabel").textContent = pretty(selected);
+    renderItems();
+    renderMonthlyItems();
+    renderHistory();
+  }
+
+  function addItem(event) {
+    event.preventDefault();
+    const name = $("exName").value.trim();
+    const price = Number($("Ex").value);
+    if (!name) return status("Please enter an item name.", true);
+    if (!Number.isFinite(price) || price <= 0) return status("Enter a price greater than zero.", true);
+    const day = ensureDay(selected);
+    day.item.push(name);
+    day.price.push(price);
+    $("exName").value = "";
+    $("Ex").value = "";
+    $("itemForm").hidden = true;
+    render();
+    scheduleSave();
+    $("exName").focus();
+  }
+
+  function addMonthlyExpense(event) {
+    event.preventDefault();
+    const name = $("monthlyName").value.trim();
+    const price = Number($("monthlyPrice").value);
+    if (!name) return status("Please enter a monthly expense name.", true);
+    if (!Number.isFinite(price) || price <= 0) return status("Enter a monthly expense price greater than zero.", true);
+    data._monthlyExpenses.item.push(name);
+    data._monthlyExpenses.price.push(price);
+    $("monthlyName").value = "";
+    $("monthlyPrice").value = "";
+    render();
+    scheduleSave();
+  }
+
+  function saveBudget() {
+    const value = $("totalAmount").value;
+    const amount = Number(value);
+    if (value.trim() === "" || !Number.isFinite(amount) || amount < 0) {
+      return status("Enter a valid budget amount.", true);
+    }
+    data._settings.totalMoney = amount;
+    $("totalAmount").value = "";
+    render();
+    scheduleSave();
+  }
+
+  function summary() {
+    const total = dayTotal(selected);
+    const difference = allowance() - total;
+    status("Total expense for " + pretty(selected) + ": " + money(total) + " PKR · Daily allowance: " +
+      money(allowance()) + " PKR · " + (difference >= 0 ? "Under allowance by " : "Over allowance by ") +
+      money(Math.abs(difference)));
+  }
+
+  async function signIn(event) {
+    event.preventDefault();
+    if (!supabaseClient) return authMessage("Set your Project URL and publishable key in supabase-config.js first.", true);
+    const email = $("authEmail").value.trim();
+    const password = $("authPassword").value;
+    $("signInBtn").disabled = true;
+    $("signUpBtn").disabled = true;
+    authMessage("Signing in…");
+    const { error } = await supabaseClient.auth.signInWithPassword({ email, password });
+    $("signInBtn").disabled = false;
+    $("signUpBtn").disabled = false;
+    if (error) authMessage(error.message, true);
+    else authMessage("Signed in successfully.");
+  }
+
+  async function signUp() {
+    if (!supabaseClient) return authMessage("Set your Project URL and publishable key in supabase-config.js first.", true);
+    const email = $("authEmail").value.trim();
+    const password = $("authPassword").value;
+    if (!email || password.length < 6) return authMessage("Enter a valid email and a password of at least 6 characters.", true);
+    $("signInBtn").disabled = true;
+    $("signUpBtn").disabled = true;
+    authMessage("Creating your account…");
+    const { data: result, error } = await supabaseClient.auth.signUp({ email, password });
+    $("signInBtn").disabled = false;
+    $("signUpBtn").disabled = false;
+    if (error) return authMessage(error.message, true);
+    if (!result.session) {
+      authMessage("Account created. Check your email to confirm the account, then sign in.");
+    } else {
+      authMessage("Account created. Loading your private tracker…");
+    }
+  }
+
+  async function signOut() {
+    const saved = await persistNow();
+    if (!saved) return;
+    const { error } = await supabaseClient.auth.signOut();
+    if (error) status("Could not sign out: " + error.message, true);
+  }
+
+  async function resetAll() {
+    if (!window.confirm("Permanently delete your budget and all expenses from your cloud account? This cannot be undone.")) return;
+    data = emptyData();
+    render();
+    const saved = await persistNow();
+    if (saved) status("Your budget and expense history have been reset in the cloud.");
+  }
+
+  function init() {
+    $("authForm").addEventListener("submit", signIn);
+    $("signUpBtn").addEventListener("click", signUp);
+    $("signOutBtn").addEventListener("click", signOut);
+    $("openItemForm").addEventListener("click", () => {
+      $("itemForm").hidden = !$("itemForm").hidden;
+      if (!$("itemForm").hidden) $("exName").focus();
+    });
+    $("itemForm").addEventListener("submit", addItem);
+    $("monthlyForm").addEventListener("submit", addMonthlyExpense);
+    $("totalBtn").addEventListener("click", saveBudget);
+    $("total").addEventListener("click", summary);
+    $("printBtn").addEventListener("click", () => window.print());
+    $("expenseDate").value = today;
+    $("expenseDate").addEventListener("change", (event) => {
+      selected = event.target.value || today;
+      render();
+    });
+    $("reset").addEventListener("click", resetAll);
+
+    const config = window.APP_CONFIG || {};
+    const url = String(config.SUPABASE_URL || "").trim();
+    const key = String(config.SUPABASE_PUBLISHABLE_KEY || "").trim();
+    const missingConfig = !url || !key || url.includes("YOUR_PROJECT") || key.includes("YOUR_PUBLISHABLE_KEY");
+    if (missingConfig) {
+      $("configError").hidden = false;
+      $("configError").textContent = "Setup required: add your Supabase Project URL and publishable key to supabase-config.js. See README.md.";
+      authMessage("Supabase configuration is not complete yet.", true);
+      showAuth();
+      return;
+    }
+    if (!window.supabase?.createClient) {
+      authMessage("Could not load the Supabase library. Check your internet connection and refresh.", true);
+      return;
+    }
+
+    supabaseClient = window.supabase.createClient(url, key);
+    supabaseClient.auth.onAuthStateChange((_event, session) => {
+      // Defer database work until after Supabase finishes its auth callback.
+      Promise.resolve().then(() => handleSession(session));
+    });
+  }
+
+  init();
+})();

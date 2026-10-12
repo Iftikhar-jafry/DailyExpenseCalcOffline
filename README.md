@@ -1,50 +1,60 @@
-# DailyExpenseCalcOffline
-<h2>Offline daily expense tracker using local storage</h2>
-<br>
-✅ GitHub Repository Description (Professional and Clear)
-<br>
-🧾 Monthly Expense Manager<br>
-This is a simple offline web app built with HTML, CSS, and JavaScript to help you manage your monthly budget.
-<br>
-💰 Features:
-<br>
-<ul>
-<li>Enter your total monthly income</li>
+# Daily Expense Tracker
 
-<li>Automatically calculates how much you can spend each day</li>
+A personal expense tracker built with HTML, CSS, vanilla JavaScript, Flask, and a JSON file for persistent storage.
 
-<li>Updates daily spending limit based on your actual expenses</li>
+## Features
 
-<li>Encourages good saving habits with feedback messages</li>
+- Daily expenses grouped by date
+- Separate monthly expenses (for example, haircuts and clothing)
+- Monthly budget, total spent, remaining balance, and daily allowance
+- Automatically loads existing data when the app starts
+- Automatically saves budget and saved expenses to `expense-data.json`
+- Responsive layout with a right-side vertical list of daily and monthly items
 
-<li>Works completely offline using the browser's local storage</li>
-</ul>
-📦 Tech Stack:
-<ul>
-<li>HTML</li>
+## Run locally
 
-<li>CSS</li>
+**Python and a running Flask server are required for automatic saving.** Opening `dailyExpences.html` directly in the browser will not connect to the backend.
 
-<li>JavaScript (Vanilla)</li>
+1. Install Python 3.10 or newer.
+2. Open a terminal in this repository folder.
+3. Install the dependency:
 
-<li>Browser Local Storage</li>
+   ```bash
+   python -m pip install -r requirements.txt
+   ```
 
-🔐 No backend, no login — everything is stored in your browser securely.
-<br>
+4. Start the server:
 
-🚀 Perfect for those who want a simple and private way to manage money.
+   ```bash
+   python app.py
+   ```
 
-# How to Set Your own password
-<ul>
-<li>Go to dailyExpense.js file</li>
+5. Open [http://127.0.0.1:5000](http://127.0.0.1:5000) in your browser.
 
-<li>Search reset function</li>
+The app reads and writes `expense-data.json` in the project folder through the `/api/data` endpoint. Keep the terminal/server running while using the app. Changes to the budget, saved daily expenses, and monthly expenses are saved automatically.
 
-<li>In reset function You will find <p>
-if(pass=="abPassword")
-</p></li>
+## JSON structure
 
-<li>Replace abPassword with Your password</li>
+```json
+{
+  "_settings": {
+    "totalMoney": 30000
+  },
+  "_monthlyExpenses": {
+    "item": ["Haircut", "Pent shirt"],
+    "price": [500, 1800]
+  },
+  "2026-10-12": {
+    "item": ["Food", "Transport"],
+    "price": [100, 120]
+  }
+}
+```
 
-<li>Works completely offline using the browser's local storage</li>
-</ul>
+Daily records use date keys in `YYYY-MM-DD` format. Monthly expenses are stored separately and count toward total spending and remaining balance, but are not included in a particular day's total.
+
+## Important
+
+- Back up `expense-data.json` before making major changes.
+- This local Flask server listens on `127.0.0.1` only by default.
+- GitHub Pages serves static files only; it cannot run this Flask backend. Deploy the Flask app to a Python-capable host if you need remote access.
